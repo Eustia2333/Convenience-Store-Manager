@@ -14,7 +14,6 @@ class AuthLogic:
     def login(self, username, password):
         """
         验证登录
-        :return: dict (包含 user_id, username, role) 或 None (登录失败)
         """
         self.db.connect()
         sql = "SELECT id, username, role FROM users WHERE username=%s AND password=%s"
@@ -31,7 +30,7 @@ class AuthLogic:
 
 class ProductLogic:
     """
-    负责商品管理 (CRUD) 及 查询
+    负责商品增删查改
     """
 
     def __init__(self):
@@ -97,8 +96,7 @@ class ProductLogic:
 
     def search_products(self, keyword):
         """
-        搜索功能 (仅支持名称和分类)
-        --- 修改点：移除了模糊拼音搜索逻辑 ---
+        搜索功能
         """
         self.db.connect()
 
@@ -118,7 +116,7 @@ class ProductLogic:
             self.db.close()
 
     def get_low_stock_products(self):
-        """获取低库存预警列表 (系统/店长)"""
+        """获取低库存预警列表"""
         self.db.connect()
         sql = "SELECT * FROM products WHERE stock < min_stock_alert"
         try:
@@ -153,7 +151,7 @@ class UserLogic:
             self.db.close()
 
     def delete_user(self, user_id):
-        """删除用户 (增加了外键约束错误捕获)"""
+        """删除用户"""
         self.db.connect()
         try:
             self.db.cursor.execute("DELETE FROM users WHERE id=%s", (user_id,))
@@ -195,7 +193,7 @@ class SalesLogic:
                 p_id = item['id']
                 buy_qty = int(item['buy_qty'])
 
-                # 获取当前库存和进价 (使用悲观锁)
+                # 获取当前库存和进价 (悲观锁)
                 cursor.execute("SELECT name, stock, buy_price, sell_price FROM products WHERE id=%s FOR UPDATE",
                                (p_id,))
                 product = cursor.fetchone()
@@ -242,12 +240,10 @@ class SalesLogic:
                 "member_points": points_added
             }
 
-            # 关键修改：这里返回 3 个值
             return True, msg, receipt_data
 
         except Exception as e:
             conn.rollback()
-            # 失败时也要返回 3 个值，保持格式一致
             return False, str(e), None
         finally:
             self.db.close()
@@ -375,7 +371,7 @@ class SalesLogic:
             self.db.close()
 
     def get_top_selling_products(self, limit=5):
-        """Feature 4: 热销排行榜"""
+        """热销排行榜"""
         self.db.connect()
         sql = """
         SELECT p.name, SUM(s.quantity) as total_qty
@@ -392,7 +388,7 @@ class SalesLogic:
             self.db.close()
 
     def get_modification_logs(self):
-        """Feature 6: 获取修改记录"""
+        """获取修改记录"""
         self.db.connect()
         sql = """
         SELECT l.log_time, u.username as operator, p.name as product, l.details, s.order_id
@@ -434,7 +430,7 @@ class SalesLogic:
             self.db.close()
 
     def get_minute_sales_stats(self):
-        """获取今日分钟级销售趋势 (修复版：避开SQL百分号转义问题)"""
+        """获取今日分钟级销售趋势"""
         self.db.connect()
 
         sql = """
@@ -455,7 +451,6 @@ class SalesLogic:
             totals = []
 
             for item in data:
-                # 在 Python 里安全地拼接时间字符串 "09:30"
                 # :02d 表示不足两位补0
                 time_str = f"{item['h']:02d}:{item['m']:02d}"
                 times.append(time_str)
