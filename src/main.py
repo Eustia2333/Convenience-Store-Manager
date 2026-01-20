@@ -129,9 +129,9 @@ class ManagerDashboard(ttk.Frame):
                    command=logout_callback).pack(side=RIGHT)
 
     def on_tab_change(self, event):
-        """切换到报表页时才刷新数据"""
+        """切换到报表页刷新数据"""
         if self.notebook.index(self.notebook.select()) == 1:
-            # 延时一点点，确保布局计算完成
+            # 延时
             self.after(50, self.refresh_report_data)
 
     # ================= Tab 1: 商品管理 =================
@@ -157,7 +157,6 @@ class ManagerDashboard(ttk.Frame):
         ttk.Button(toolbar, text="刷新列表", bootstyle="info-outline", command=self.refresh_product_list).pack(
             side=LEFT, padx=10)
 
-        # --- 修改点：将按钮赋值给 self.btn_expire，以便后续修改它的文字 ---
         self.btn_expire = ttk.Button(toolbar, text="临期商品查询", bootstyle="warning",
                                      command=self.show_expiring_goods)
         self.btn_expire.pack(side=LEFT, padx=10)
@@ -179,7 +178,7 @@ class ManagerDashboard(ttk.Frame):
 
             # 1. 库存不足 (原有)
             self.tree_prod.tag_configure("low_stock", foreground="red")
-            # 2. 已过期 (严重警告，深灰色背景白字)
+            # 2. 已过期 (深灰背景白字)
             self.tree_prod.tag_configure("expired", background="#555", foreground="white")
             # 3. 临期 (黄色背景)
             self.tree_prod.tag_configure("expiring", background="#FFF8DC", foreground="#FF8C00")
@@ -228,7 +227,7 @@ class ManagerDashboard(ttk.Frame):
             if p_date < today:
                 tags = ("expired",)  # 已过期
             else:
-                tags = ("expiring",)  # 还没过期，但快了
+                tags = ("expiring",)  # 快过期
 
             self.tree_prod.insert("", END, values=(
                 p['id'], p['name'], p['category'], p['buy_price'], p['sell_price'],
@@ -286,7 +285,7 @@ class ManagerDashboard(ttk.Frame):
             )
 
     def search_mgr_products(self):
-        """店长端的搜索逻辑"""
+        """店长端搜索逻辑"""
         keyword = self.search_var.get().strip()
         if not keyword:
             self.refresh_product_list()
@@ -372,7 +371,7 @@ class ManagerDashboard(ttk.Frame):
                 # --- 获取保质期输入 ---
                 expire = entries['expire'].get().strip()
                 if not expire:
-                    expire = None  # 如果没填，就是 None
+                    expire = None  # 如果没填就是 None
 
                 if data:
                     # 调用更新方法
@@ -591,7 +590,7 @@ class ManagerDashboard(ttk.Frame):
 
 class ClerkStation(ttk.Frame):
     """
-    售货员收银台：包含前台收银、个人历史订单查询
+    售货员收银台
     """
 
     def __init__(self, master, user_info, logout_callback):
@@ -617,7 +616,7 @@ class ClerkStation(ttk.Frame):
         self.notebook.add(self.tab_cashier, text="前台收银")
         self._init_cashier_ui()
 
-        # --- Tab 2: 历史订单 (只看自己的) ---
+        # --- Tab 2: 历史订单 ---
         self.tab_history = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.tab_history, text="历史订单")
         self._init_history_ui()
@@ -643,7 +642,7 @@ class ClerkStation(ttk.Frame):
         header.pack(fill=X)
         ttk.Label(header, text=f"收银台 | 操作员: {self.user_info['username']}",
                   font=("微软雅黑", 12, "bold"), bootstyle="primary").pack(side=LEFT)
-        ttk.Button(header, text="交班退出", bootstyle="danger-outline-small",
+        ttk.Button(header, text="登出", bootstyle="danger-outline-small",
                    command=logout_callback).pack(side=RIGHT)
 
     # ================= Tab 1: 收银台逻辑 =================
@@ -747,7 +746,7 @@ class ClerkStation(ttk.Frame):
 
     # ================= Tab 2: 历史订单逻辑 =================
     def _init_history_ui(self):
-        """Feature 5: 查询并修改订单"""
+        """查改"""
         toolbar = ttk.Frame(self.tab_history)
         toolbar.pack(fill=X, pady=5)
         ttk.Button(toolbar, text="修改选中订单数量", bootstyle="warning", command=self.modify_selected_order).pack(side=LEFT)
